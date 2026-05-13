@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  sensitive-lexicon:
+    image: sensitive-lexicon:latest
+    container_name: sensitive-lexicon
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=8080
+      - LEXICON_DIR=Vocabulary
+      - FUZZY_MIN_NGRAM=${FUZZY_MIN_NGRAM:-2}
+      - FUZZY_MAX_NGRAM=${FUZZY_MAX_NGRAM:-10}
+      - FUZZY_MAX_DISTANCE=${FUZZY_MAX_DISTANCE:-1}
+    volumes:
+      - ./Vocabulary:/app/Vocabulary:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - sensitive-lexicon-net
+
+networks:
+  sensitive-lexicon-net:
+    driver: bridge

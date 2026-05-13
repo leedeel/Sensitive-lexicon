@@ -60,11 +60,10 @@ func (s *Service) Detect(req DetectRequest) DetectResponse {
 
 	unique := make(map[string]Match)
 
-	// Substring hits: for each codepoint window from input, find lexicon entries containing it
-	s.store.ForEachSubstringMatch(text, func(word string) bool {
+	// Substring hits: find all lexicon words that appear as substrings in input text
+	for _, word := range s.store.FindMatchesInText(text) {
 		unique[word] = Match{Word: word, Type: "substring"}
-		return true
-	})
+	}
 
 	if req.EnableFuzzy {
 		for _, token := range generateNgrams(text, s.fuzzyCfg.MinNgramLen, s.fuzzyCfg.MaxNgramLen) {

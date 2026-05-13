@@ -79,6 +79,32 @@ func (s *Store) Stats() map[string]interface{} {
 	}
 }
 
+// FindMatchesInText returns all lexicon words that appear as substrings in the given text.
+// It scans each rune offset and collects all prefix matches against the trie.
+func (s *Store) FindMatchesInText(text string) []string {
+	s.mu.RLock()
+	tr := s.trie
+	s.mu.RUnlock()
+	if tr == nil || text == "" {
+		return nil
+	}
+	runes := []rune(text)
+	n := len(runes)
+	found := make(map[string]struct{})
+	for i := 0; i < n; i++ {
+		suffix := string(runes[i:])
+		tr.VisitPrefixes(patricia.Prefix(suffix), false, func(prefix patricia.Prefix, _ patricia.Item) error {
+			found[string(prefix)] = struct{}{}
+			return nil
+		})
+	}
+	result := make([]string, 0, len(found))
+	for word := range found {
+		result = append(result, word)
+	}
+	return result
+}
+
 // ForEachSubstringMatch visits any keys that contain the given substring.
 // It uses the library's substring search.
 func (s *Store) ForEachSubstringMatch(query string, visit func(word string) bool) {
